@@ -1,0 +1,313 @@
+\documentclass{scrartcl}
+\usepackage{yfonts}
+\usepackage[T1]{fontenc}
+\usepackage[scaled =.92]{helvet}
+\setlength{\paperwidth}{5in}
+\setlength{\paperheight}{3in}
+\renewcommand*{\familydefault}{phv}
+\usepackage[pdftex,margin=0.1in]{geometry}
+\usepackage{soul}
+\usepackage[skins]{tcolorbox}
+\usepackage{varwidth}
+\usepackage{pgffor}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[pdfversion=1.5,pdftex,pdfpagelayout=SinglePage,
+pdftitle={TFT Character Sheet},pdfsubject={Trying to use LaTeX to generate PDF forms for Character sheets...}%
+]{hyperref}
+\usepackage[pdftex]{eforms}
+\definecolor{background}{rgb}{1 1 1}
+\pagecolor{background}
+\setlength{\parindent}{0.0cm}
+\usepackage[]{insdljs}
+
+%% Modulo see https://tex.stackexchange.com/a/544317/17868
+%\ifx\ivalue\undefined \def\ivalue{7}\fi
+\def\imodul{5}
+\def\modulo#1#2{\ifnum#1=0 0\else(#1-#2*((2*#1-#2)/(2*#2)))\fi}
+
+\newcommand{\statTextLabel}[1]{\Large\textbf{#1}}
+\newcommand{\statTextField}[1]{\textField[
+        \BC{0.9 0.9 0.9}
+        \textSize{16}
+        \AA{%
+            \AAKeystroke{processStatKey(this, event);}
+            %\AAFormat{redirectTab(this,event);}
+        }
+        \W{0.5}
+    ]{#1}{0.3in}{18bp}}
+
+\def\maxHits{25}
+
+\begin{insDLJS}[test]{test}{JavaScript}
+var MAX_HITS = \maxHits;
+var reg = new RegExp('^[0-9]?[0-9]?$');
+var reg3 = new RegExp('^[0-9]?[0-9]?[0-9]?$');
+
+function Hello() {
+    initButtons(this);
+    this.dirty=false;
+}
+
+function processStatKey(myThis, myEvent) {
+  if (!myEvent.willCommit)
+    myEvent.rc = reg.test(AFMergeChange(myEvent));
+}
+
+function processExpKey(myThis, myEvent) {
+  if (!myEvent.willCommit)
+    myEvent.rc = reg3.test(AFMergeChange(myEvent));
+}
+
+function updateForm() {
+    adjustHitBoxesToST();
+    updateRemaininST();
+}
+
+function updateRemaininST() {
+    var st = this.getField('st').value; 
+    if (st != "") {
+        var rstf = this.getField('remainingSt');
+        rstf.value = st - sumHits(); 
+    } 
+}
+
+function adjustHitBoxesToST() {
+    var st = this.getField('st').value; 
+    for(var i=0; i<MAX_HITS; i++) {
+        var b = this.getField('hit.' + i); 
+        b.display = (i < st ? display.visible : display.hidden);
+        if (b.display == display.hidden) {b.value=false};
+    }
+}
+
+function clearHits() {
+    for(var j=0; j<MAX_HITS; j++) {
+        var b = this.getField("hit." + j); 
+        b.value = false; 
+    }
+}
+
+function sumHits() {
+    var sum = 0;
+    for(var j=0; j<MAX_HITS; j++) {
+        var b = this.getField("hit." + j); 
+        sum += b.isBoxChecked(0) ? 1 : 0;
+    }
+    return sum;
+}
+
+function processStatKey(myThis, myEvent) {
+  if (!myEvent.willCommit)
+    myEvent.rc = reg.test(AFMergeChange(myEvent));
+}
+
+function processExpKey(myThis, myEvent) {
+  if (!myEvent.willCommit)
+    myEvent.rc = reg3.test(AFMergeChange(myEvent));
+}
+
+function redirectTab(myThis, myEvent) {
+    myThis.getField('debug').value = myThis.getField('debug').value + "... willCommit: " + myEvent.willCommit
+        + ", commitKey: " + myEvent.commitKey
+        + ", targetName: " + myEvent.targetName;
+      if (!myEvent.willCommit) {
+        if(myEvent.commitKey===3) {
+        myThis.getField('dx').setFocus();
+        myEvent.rc = true;
+        }
+    }
+}
+
+function initButtons(myThis) {
+    var butt1 = myThis.getField('clearHits');
+    butt1.display = display.noPrint;
+    butt1.buttonSetCaption("Clear hits",0);
+    butt1.textSize = 0; // fit to rectangle
+    butt1.fillColor = color.ltGray;
+    var statField;
+    statField = myThis.getField('race');
+    statField.strokeColor = color.transparent;
+    statField.borderColor = color.transparent;
+    statField = myThis.getField('ma');
+    statField.alignment="right";
+    statField = myThis.getField('adjma');
+    statField.alignment="right";
+    statField.borderStyle = border.d;
+    statField = myThis.getField('st');
+    statField.alignment="right";
+    statField = myThis.getField('dx')
+    statField.alignment="right";
+    statField = myThis.getField('adjdx')
+    statField.alignment="right";
+    statField.borderStyle = border.d;
+    statField = myThis.getField('iq')
+    statField.alignment="right";
+    statField = myThis.getField('exp')
+    statField.alignment="right";
+    statField = myThis.getField('remainingSt')
+    statField.alignment="right";
+    statField.readonly = true;
+    statField.strokeColor = color.transparent;
+    statField.textColor = color.gray;
+}
+
+\end{insDLJS}
+
+%% This must be here
+\OpenAction{/S/JavaScript/JS(Hello();)}
+
+%% Funky color box for outline of fields
+\newtcolorbox{mybox}[1]{
+    %varwidth boxed title,
+    %width=4cm,
+    tcbox width=minimum left,
+    enhanced,
+    on line,
+    attach boxed title to top left={yshift=-2.3mm,yshifttext=-1mm, xshift=2mm},
+    boxed title style={
+        size=fbox,
+        colback=white,
+        colframe=white,
+    },
+    coltitle=black,
+    colback=white,
+    leftupper=1mm,
+    %center title,
+    title={#1}
+}
+
+\tcbset{boxsep=0mm,left=1mm,top=-0.1mm,bottom=1mm,fonttitle=\scriptsize\bfseries}
+
+\begin{document}
+\begin{Form}
+    \tcbox[width=0.5in, tcbox width=minimum left,
+    enhanced,
+    on line,
+    attach boxed title to top left={yshift=-2.3mm,yshifttext=-1mm, xshift=2mm},
+    boxed title style={
+        size=fbox,
+        colback=white,
+        colframe=white,
+    },
+    coltitle=black,
+    colback=white,
+    leftupper=1mm,
+    %center title,
+    title={NAME}
+    ]{
+        \textField
+        [\textSize{16}
+        \BC{1 1 1}%\BG{0.98 0.92 0.73}
+        \textColor{0 0 0}
+        ]{name}{2in}{20bp}
+    } 
+\tcbox[width=0.5in, 
+%tcbox width=minimum left,
+enhanced,
+on line,
+attach boxed title to top left={yshift=-2.3mm,yshifttext=-1mm, xshift=2mm},
+boxed title style={
+    size=fbox,
+    colback=white,
+    colframe=white,
+},
+coltitle=black,
+colback=white,
+leftupper=1mm,
+%center title,
+title={RACE}
+]{
+        \comboBox[\W{0}\S{S}\textSize{13}\Ff\FfEdit\DV{Human}\V{Human}\BC{1 1 1}]
+        {race}{0.9in}{20bp}
+        {[(10)(Human)][(10)(Dwarf)][(10)(Halfling)][(10)(Orc)][(12)(Elf)]}
+}~\statTextLabel{MA:} \statTextField{ma} (\statTextField{adjma})
+
+\begin{tabular}{r<{\hspace{-8pt}}l<{\hspace{-8pt}}l}
+    \statTextLabel{ST:} & 
+    \textField[\BC{0.9 0.9 0.9}
+        \textSize{16}
+        \AA{%
+            \AAKeystroke{processStatKey(this, event);}
+            \AAFormat{redirectTab(this,event);}
+        }
+        \W{0.5}
+    ]{st}{0.3in}{18bp} & (\statTextField{remainingSt})  \foreach \i in {0,...,\numexpr\maxHits-1}{\small\checkBox[\symbolchoice{circle}\W{0.5}]{hit.\i}{0.1in}{0.1in}{yes} 
+        \ifnum4=\numexpr \modulo\i\imodul \relax~\fi%modulo 5 see https://tex.stackexchange.com/a/544317/17868
+    }
+     \\ 
+    \statTextLabel{DX:} & \statTextField{dx} & (\statTextField{adjdx}) \hskip 30bp\pushButton[\CA{Clear hits}%
+        \A{\JS{clearHits()}}]{clearHits}{}{14bp} \\    
+    \statTextLabel{IQ:} & \statTextField{iq} & \hfill\LARGE{\swabfamily The Fantas:y Trip\hskip 10bp} \\
+        
+\end{tabular}
+
+\tcbox[width=0.5in, tcbox width=minimum left,
+enhanced,
+on line,
+attach boxed title to top left={yshift=-2.3mm,yshifttext=-1mm, xshift=2mm},
+boxed title style={
+    size=fbox,
+    colback=white,
+    colframe=white,
+},
+coltitle=black,
+colback=white,
+leftupper=1mm,
+%center title,
+title={READY WEAPONS AND ARMOR}
+]{
+        \textField[\Ff{\FfMultiline}\BC{1 1 1}]
+        {readyWeapons}{2in}{36bp}
+        {}
+}
+\tcbox[width=0.5in, tcbox width=minimum left,
+enhanced,
+on line,
+attach boxed title to top left={yshift=-2.3mm,yshifttext=-1mm, xshift=2mm},
+boxed title style={
+    size=fbox,
+    colback=white,
+    colframe=white,
+},
+coltitle=black,
+colback=white,
+leftupper=1mm,
+%center title,
+title={SLUNG WEAPONS}
+]{
+        \textField[\Ff{\FfMultiline}\BC{1 1 1}]
+        {slungWeapons}{2in}{36bp}
+        {}
+}
+\\
+%\begin{center}
+    \small{\textbf{EXPERIENCE POINTS:}}
+\textField[\BC{0.9 0.9 0.9}\AA{%
+    \AAKeystroke{processExpKey(this, event);}
+    %\AAFormat{redirectTab(this,event);}
+    }
+    \W{0.5}
+]{exp}{0.47in}{11bp}
+%\end{center}
+%%%%%%%%%%
+% hidden form to run code anytime cursor changes fields
+\textField[\AA{%
+        \AACalculate{updateForm();}
+    }
+    \F{\FHidden}
+    ]{init}{0in}{0in}
+% debug field
+\textField
+[\BC{0 0 1}\BG{0.98 0.92 0.73}
+\textColor{1 0 0}
+\Ff{\FfMultiline}
+\F{\FHidden}
+]{debug}{0in}{0bp}
+\end{Form}
+
+\vspace{4bp}
+\tiny{The material presented here is my original creation, intended for use with the \href{https://thefantasytrip.game/}{The Fantasy Trip} system from \href{http://www.sjgames.com/}{Steve Jackson Games}. This material is not official and is not endorsed by Steve Jackson Games.
+\hfill v1.0.2 \copyright~2020 \href{mailto:fuhrmanator+tftform@gmail.com}{Christopher Fuhrman}
+\end{document}
